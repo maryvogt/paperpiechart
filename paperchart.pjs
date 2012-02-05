@@ -1,107 +1,75 @@
 
-var onesixth = Math.PI / 3;      
-var debugcolors = ["red", "orange", "yellow", "green", "blue", "violet"];
+var piechart = {
+};
 
-// Here's a circle. 
-var center = new Point (350, 350);
-var radius = 200;
-var circle = new Path.Circle(center, radius);
-circle.fillColor = '#cccccc';
+piechart.init = function () {
 
-var centercircle = new Path.Circle(center, 10);
-centercircle.fillColor = "#ff0000";
-
-var start = new Point(0, 0);
-var through = new Point(100, 100);
-var to = new Point(200, 150);
-var path = new Path.Arc(start, through, to);
-path.strokeColor = 'black';
-
+// here's a circle
+    piechart.center = new Point (350, 350);
+    piechart.radius = 200;
 
 // Here are some numbers to do the pie chart
-var numbers = [1, 2, 3, 4, 6, 8];
-var sum = 0;
+//    piechart.numbers = [1, 2, 4, 8, 16, 32, 64];
 
-// add them up
-for (var i = 0; i < numbers.length; i++) {
-    sum += numbers[i];  
-}
+// add up the data
+    var sum = 0;
+    for (var i = 0; i < piechart.numbers.length; i++) {
+        sum += piechart.numbers[i];  
+    }
 
-// these will be the angles from 0 radians (the positive y axis) 
-var angles = new Array();
+// these will be the angles, clockwise from the positive x axis 
+    piechart.angles = new Array();
 
 // go through again to get the angles in radians
-for (i = 0; i < numbers.length; i++) {
-    angles[i] = (2 * Math.PI * numbers[i] / sum);
-//    angles[i] = onesixth;
-}
-
-// let's draw
-var points = new Array;
-var paths = new Array;
-var start = new Point(center.x + radius, center.y ); 
-var to = start;
-var totalangle = 0;
-
-for (i = 0; i < numbers.length; i++, start = to){
-    console.log ("i: " + i);
-    // each path starts at the center,
-    paths[i] = new Path(center);
-    // goes straight out to the current startpoint
-    paths[i].add(start);
-    console.log("start: "+start.x + "," + start.y);
-    // "through" is halfway along the circle (explain this better)
-    var throughangle = totalangle + angles[i]/2;
-    console.log ("throughangle: "+ throughangle);
-    var toangle = totalangle + angles[i];
-    totalangle = toangle;
-
-    var through = new Point(radius * Math.cos(throughangle) + center.x, 
-                            radius * Math.sin(throughangle) + center.y);
-
-    var dot = new Path.Circle(through, 10);
-    dot.fillColor = "black";
-
-    to = new Point(radius * Math.cos(toangle) + center.x,
-                       radius * Math.sin(toangle) + center.y);
-
-    paths[i].arcTo(through, to);
-    // back to the center
-    //paths[i].add(center);
-    paths[i].closePath();
-
-    // color it in
-    paths[i].strokeColor = "black";
-    paths[i].strokeWidth = 5;
-
-    paths[i].fillColor = debugcolors[i];
-
-    /*
-    if (i % 2 ) {
-        paths[i].fillColor = "#00ff00";
-   
+    for (i = 0; i < piechart.numbers.length; i++) {
+        piechart.angles[i] = (2 * Math.PI * piechart.numbers[i] / sum);
     }
-    else
-        paths[i].fillColor = "#0000ff";
-
-    */
-
-    //paths[i].fillColor = '#' + Math.floor(Math.random()*16777215).toString(16);
-    
-
-    
-
 }
 
-
-
-  
-	
+piechart.draw = function () {
     
-    
+    var paths = new Array;
+    var start = new Point(piechart.center.x + piechart.radius, piechart.center.y ); 
+    var to = start;
+    var totalangle = 0;
 
 
+    for (i = 0; i < piechart.numbers.length; i++, start = to) {
+        // each path starts at the center,
+        paths[i] = new Path(piechart.center);
+        // goes straight out to the current startpoint
+        paths[i].add(start);
+        
+        // makes an arc along the perimeter of the circle
+        // "through" is halfway along the circle (explain this better)
+        var throughangle = totalangle + piechart.angles[i]/2;
+        totalangle = totalangle + piechart.angles[i];
+        
+        var through = new Point(piechart.radius * Math.cos(throughangle) + piechart.center.x, 
+                                piechart.radius * Math.sin(throughangle) + piechart.center.y);
 
 
+        to = new Point(piechart.radius * Math.cos(totalangle) + piechart.center.x,
+                       piechart.radius * Math.sin(totalangle) + piechart.center.y);
 
-                        
+        paths[i].arcTo(through, to);
+
+        // back to the center
+        paths[i].closePath();
+
+        // color it in
+        paths[i].strokeColor = "black";
+        paths[i].strokeWidth = 2;
+
+        paths[i].fillColor = '#' + Math.floor(Math.random()*16777215).toString(16);    
+        
+    //end for
+    }
+
+// end piechart.draw()
+};
+
+// Now actually do the thing. 
+piechart.numbers = [1, 2, 1, 4, 1, 6];
+piechart.init();
+piechart.draw();
