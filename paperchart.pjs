@@ -1,15 +1,17 @@
+//
+//  How to use piechart:
+//
+//  1) set in some data using piechart.numbers
+//  2) call init();
+//  3) call draw();
 
+
+                 
 var piechart = {
+
 };
 
 piechart.init = function () {
-
-// here's a circle
-    piechart.center = new Point (350, 350);
-    piechart.radius = 200;
-
-// Here are some numbers to do the pie chart
-//    piechart.numbers = [1, 2, 4, 8, 16, 32, 64];
 
 // add up the data
     var sum = 0;
@@ -27,7 +29,20 @@ piechart.init = function () {
 }
 
 piechart.draw = function () {
-    
+
+    // center it on the canvas, make it take up as much as possible
+    piechart.center = view.center;
+    console.log ("Center at "+ piechart.center.x + ", " + piechart.center.y);
+    if (view.size.width < view.size.height) {
+        piechart.radius = view.size.width / 2;
+    }
+    else {
+        piechart.radius = view.size.height / 2;
+    }
+
+
+    console.log("view size is " + view.size.width + ", " +view.size.length+ "...radius is "+ piechart.radius);
+
     var paths = new Array;
     var start = new Point(piechart.center.x + piechart.radius, piechart.center.y ); 
     var to = start;
@@ -71,5 +86,17 @@ piechart.draw = function () {
 
 // Now actually do the thing. 
 piechart.numbers = [1, 2, 1, 4, 1, 6];
+piechart.strokecolor = "white";
 piechart.init();
 piechart.draw();
+// change the numbers and draw again
+piechart.numbers = [8, 8, 4, 4, 8, 3];
+piechart.strokecolor = "white";
+piechart.init();
+piechart.draw();
+
+// event handling
+function onResize(event)
+{
+    piechart.draw();
+}
