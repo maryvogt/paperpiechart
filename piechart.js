@@ -28,7 +28,7 @@ function addPieChart(/*string*/ id, /*string*/ parentId, /*string*/ paperSource,
                 dataType: 'html',
                 cache: false,
                 success: function(data) {
-                           alert(data);
+
                     paper = new paper.PaperScope();
                     paper.setup(document.getElementById(id));
                     paper.evaluate(data);
