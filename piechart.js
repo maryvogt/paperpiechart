@@ -1,8 +1,20 @@
 
-addPieChart: function(/*string*/ id, /*string*/ parentId, /*string*/ paperSource, 
+
+$(document).ready(function(){
+    $('#pushme').click(function (){
+        console.log("button pushed, calling addPieChart()");
+        addPieChart("pieChart1", "chartgoeshere", "paperchart.pjs", 400, 400);
+    });
+});  
+
+
+
+function addPieChart(/*string*/ id, /*string*/ parentId, /*string*/ paperSource, 
                          /*int*/ width, /*int*/ height) {
 
-        function($) {
+
+
+
             var parent = jQuery('#' + parentId);
             if (parent.length === 0) {
                 throw 'Unable to find element with id ' + parentId + ' in addPieChart function.';
@@ -16,14 +28,14 @@ addPieChart: function(/*string*/ id, /*string*/ parentId, /*string*/ paperSource
                 dataType: 'html',
                 cache: false,
                 success: function(data) {
-
+                           alert(data);
                     paper = new paper.PaperScope();
                     paper.setup(document.getElementById(id));
                     paper.evaluate(data);
 
                 }
             });
-        });
+
 
         return true;
     }
