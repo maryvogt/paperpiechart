@@ -3,16 +3,36 @@
 <title>Paperchart</title>
 
     <script src="paper.js" type="text/javascript" charset="utf-8"></script>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript" charset="utf-8"></script>    
     <script src="piechart.js" type="text/javascript" charset="utf-8"></script>
+
+
+    <script>
+    // 
+    // document ready
+    //
+    $(document).ready(function(){
+        console.log("calling pieChart()");
+        $('#piechart').pieChart({ data: [1, 2, 3, 10, 7, 5], strokecolor: green}); 
+        $('#piechart').pieChart('draw');
+
+});                     // end document ready
+
+
+    
+	/*$(function() {
+		$( "#piechart" ).datepicker({ minDate: -20, maxDate: "+1M +10D" });
+	});          */
+	</script>
 </head>
-<body>
+
+<body>                      
 <h1>PaperChart</h1>
 
     <button id="pushme">Push me</button>
 
-    <div id="chartgoeshere">
+    <div id="piechart">
 
     </div>
 </body>
-</html>
+</html>                             
