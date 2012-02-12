@@ -2,6 +2,7 @@
 function addPieChart(/*string*/ id, /*string*/ parentId, 
                      /*int*/ width, /*int*/ height) {
 
+    // NOT CALLED ANY MORE
 
     console.log("in addPieChart()");
     var parent = jQuery('#' + parentId);
@@ -18,12 +19,17 @@ function addPieChart(/*string*/ id, /*string*/ parentId,
                                       'height="' + height + '" resize="false"></canvas>');
     }
 
+    console.log("----------> element is: " + JSON.stringify( document.getElementById(id)));
     paper.setup(document.getElementById(id));
 
 
     return true;
     }; // end addPieChart
 
+
+function doDraw(/*object*/ obj)
+{
+}
 
 
 // 
@@ -36,41 +42,79 @@ function addPieChart(/*string*/ id, /*string*/ parentId,
     var methods = {
 
         init: function(options) {
+            console.log("entering init method with options:" + JSON.stringify(options));
+
             var defaults = {
                     label: "Hi There", 
                     labelPos: "top", 
                     strokecolor: "black", 
-                    strokewidth: 2};
+                    strokewidth: 2,
+                    id: "piechart",
+                    width: 400,
+                    height: 400
+                        };
 
             options = $.extend(defaults, options);
-            
+
+            console.log("after default processing the options are: "+JSON.stringify(options));
 
             return this.each(function() {
                 obj = $(this);
-                obj.data(options);
+                obj.data(options); // this may be overriding previously set options to the defaults, check that
+                console.log("obj.data is now: "+JSON.stringify(obj.data()));
                    
                 // want to create a canvas as a child of the current obj
-                if (obj.children() {
+                if (obj.children("canvas.piechart").length != 0) {
+                    // already have one, we're good
+                    console.log("returning without creating canvas");
+                    console.log("because we have this many: "+ obj.children("canvas").length);
+                    return true;
                 }
 
+                var canvas;
+                var canvasid = obj.data("id");
+                var canvaswidth = obj.data("width");
+                var canvasheight = obj.data("height");
+
+              
+                canvas = $('<canvas id="' + canvasid + '" class="canvas" width="' + canvaswidth + '" ' + 
+                       'height="' + canvasheight + '" resize="false"></canvas>');
+                canvas.class = "piechart";
+
+                obj.append(canvas);
+
+                paper = new paper.PaperScope();
+                paper.setup(document.getElementById(canvasid));
 
 
+                var path = paper.Path.Star(paper.view.center, 9, 50, 75);
+                path.fillColor = "purple";
+                path.strokeColor = "red";
 
-                addPieChart("pieChart1", /* how to get the name of this */,  400, 400);
-                obj.addClass('pieChart');
+                paper.view.draw();
+
+                methods.draw();
 
             }); // end function(), end this.each, end return
+
         }, // end init
 
         draw: function (){  
-             console.log("Entering draw method");
+             var obj = $(this);
+             console.log("Entering draw method: obj.data() is: "+(JSON.stringify(obj.data())));
              
-             if ($(this).data("paths") != null) {
+             if (obj.data("paths") != null) {
                  console.log("returning quickly from draw() because we already have paths for this data");
                  return true;
              }
 
-             var nums = $(this).data('numbers');
+             var nums = obj.data('numbers');
+             if (nums == null) {
+                 console.log("no data for pie chart");
+                 var text = new paper.PointText(paper.view.center);
+                 text.fillColor = "black";
+                 text.content = "No data for pie chart."
+             }
              if (nums != null) {
                  console.log("we have numbers! "+nums);
                  // if we have numbers, we made sure it was an array when it was set in
@@ -129,12 +173,12 @@ function addPieChart(/*string*/ id, /*string*/ parentId,
 
                      // color it in
                      console.log("about to stroke the path with "+$(this).data("strokecolor"));
-                     if ($(this).data("strokecolor") == null) {
-                         $(this).data("strokewidth", 4);
-                         $(this).data("strokecolor", "orange");
+                     if (obj.data("strokecolor") == null) {
+                         obj.data("strokewidth", 4);
+                         obj.data("strokecolor", "orange");
                      }
-                     paths[i].strokeColor = $(this).data("strokecolor");
-                     paths[i].strokeWidth = $(this).data("strokewidth");
+                     paths[i].strokeColor = obj.data("strokecolor");
+                     paths[i].strokeWidth = obj.data("strokewidth");
 
                      // random colors for debugging
                      paths[i].fillColor = '#' + Math.floor(Math.random()*16777215).toString(16);    

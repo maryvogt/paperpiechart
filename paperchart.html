@@ -13,8 +13,7 @@
     //
     $(document).ready(function(){
         console.log("calling pieChart()");
-        $('#piechart').pieChart({ data: [1, 2, 3, 10, 7, 5], strokecolor: green}); 
-        $('#piechart').pieChart('draw');
+        $('#piechartdiv').pieChart({ numbers: [1, 2, 3, 10, 7, 5], strokecolor: "green"}); 
 
 });                     // end document ready
 
@@ -31,7 +30,7 @@
 
     <button id="pushme">Push me</button>
 
-    <div id="piechart">
+    <div id="piechartdiv">
 
     </div>
 </body>
