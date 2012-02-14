@@ -13,7 +13,8 @@
     //
     $(document).ready(function(){
         console.log("calling pieChart()");
-        $('#piechartdiv').pieChart({ numbers: [64, 32, 16, 8, 4, 2, 1], strokecolor: "pink"}); 
+        //$('#piechartdiv').pieChart({ numbers: [64, 32, 16, 8, 4, 2, 1], strokecolor: "pink"}); 
+        $('#piechartdiv').pieChart([64, 32, 16, 8, 4, 2, 1]); 
 
 });                     // end document ready
 
@@ -28,7 +29,7 @@
 <body>                      
 <h1>PaperChart</h1>
 
-    <button id="pushme">Push me</button>
+    <button id="pushme" onclick="$('#piechartdiv').pieChart({ numbers: [24, 12, 24, 12, 24, 6, 4]});">push me</button>
 
     <div id="piechartdiv">
 

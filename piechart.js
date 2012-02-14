@@ -1,52 +1,45 @@
-// helper function
-function addPieChart(/*string*/ id, /*string*/ parentId, 
-                     /*int*/ width, /*int*/ height) {
+// TODO: 
+// move "numbers" out from all the other options ?
 
-    // NOT CALLED ANY MORE
+// do "width" and "height" actually make sense? should it be "radius" instead?
 
-    console.log("in addPieChart()");
-    var parent = jQuery('#' + parentId);
-    
-    if (parent.length === 0) {
-        throw 'Unable to find element with id ' + parentId + ' in addPieChart function.';
-    }
+// label placement
 
-    var canvas = jQuery('#' + id);
-    
-    if (canvas.length === 0) {
-        console.log("creating a canvas tag whose id is "+id);
-        jQuery('#' + parentId).append('<canvas id="' + id + '" class="canvas" width="' + width + '" ' + 
-                                      'height="' + height + '" resize="false"></canvas>');
-    }
-
-    console.log("----------> element is: " + JSON.stringify( document.getElementById(id)));
-    paper.setup(document.getElementById(id));
+// multiple canvases
 
 
-    return true;
-    }; // end addPieChart
+        
 
+//-------------------------------//
+// Helper functions              //
+//-------------------------------//
 
-
-// Obj is, uh, what? It's the div tag which contains the canvas for paper to draw the pie chart on
-function doDraw(/*object*/ obj)
+// obj is the div tag which contains the canvas for paper to draw the pie chart on
+function doDraw(/*object*/ obj, /* boolean */ dataChanged)
 {
-    console.log("Entering draw method: obj is: "+obj.get(0)+ ", obj.data() is: "+(JSON.stringify(obj.data())));
+    // if we already have paths, can we just reuse them?
+    var paths = obj.data("paths");
+    if (paths != null) {
+        if (!dataChanged) {
+            paper.view.draw();
+            return true;
+        }
+        else // data has changed, have to remove the old paths
+        {
+            for (var i = 0; i < paths.length; i++) {
+                paths[i].remove();
+            }
 
-    if (obj.data("paths") != null) {
-        console.log("returning quickly from draw() because we already have paths for this data");
-        return true;
+        }
     }
 
     var nums = obj.data('numbers');
     if (nums == null) {
-        console.log("no data for pie chart");
         var text = new paper.PointText(paper.view.center);
         text.fillColor = "black";
         text.content = "No data for pie chart."
     }
     if (nums != null) {
-        console.log("we have numbers! "+nums);
         // if we have numbers, we made sure it was an array when it was set in
         var sum = 0;
         for (var i = 0; i < nums.length; i++) {
@@ -59,7 +52,6 @@ function doDraw(/*object*/ obj)
 
         // calculate center and radius for the pie chart
         var center = paper.view.center;
-        console.log("doDraw(): paper.view.center is: "+paper.view.center.x+", "+paper.view.center.y);
         var radius;
         if (paper.view.size.width < paper.view.size.height) {
             radius = paper.view.size.width / 2;
@@ -67,12 +59,11 @@ function doDraw(/*object*/ obj)
             radius = paper.view.size.height / 2;
         }
 
-        radius -= 5; // bring it in a little so the edge doesn't get cut off
-        console.log("doDraw(): radius is: "+radius);
+        radius -= 5; // bring it in a little so the edge doesn't get cut off  (adjusting this for strokewidth would be nice)
 
         // we are going to keep the Path objects around so that we can remove them
         // from the Paper project if the data changes
-        var paths = new Array;
+        paths = new Array;
 
         var start = new paper.Point(center.x + radius, center.y );      // first wedge starts at 3:00
         var through;
@@ -90,8 +81,6 @@ function doDraw(/*object*/ obj)
             //    "through" is halfway along the circle (explain this better)
             throughangle = totalangle + angles[i]/2;
             totalangle = totalangle + angles[i];
-            var c1 = Math.cos(throughangle);
-            console.log("doDraw(): c1 = "+c1);
 
             through = new paper.Point(radius * Math.cos(throughangle) + center.x, 
                                       radius * Math.sin(throughangle) + center.y);
@@ -100,25 +89,21 @@ function doDraw(/*object*/ obj)
             to = new paper.Point(radius * Math.cos(totalangle) + center.x,
                                  radius * Math.sin(totalangle) + center.y);
 
-            console.log("doDraw(): paths["+i+"].arcTo(("+through.x+","+through.y+"), ("+to.x+","+ to.y+"))");
+
             paths[i].arcTo(through, to);
 
             // back to the center
             paths[i].closePath();
 
             // color it in
-            console.log("about to stroke the path with "+obj.data("strokecolor"));
-            if (obj.data("strokecolor") == null) {
-                obj.data("strokewidth", 4);
-                obj.data("strokecolor", "orange");
-            }
+
             paths[i].strokeColor = obj.data("strokecolor");
             paths[i].strokeWidth = obj.data("strokewidth");
 
             // random colors for debugging
             paths[i].fillColor = '#' + Math.floor(Math.random()*16777215).toString(16);    
 
-            $(this).data("paths", paths);
+            obj.data("paths", paths);
 
         } // end for
         paper.view.draw();
@@ -137,28 +122,45 @@ function doDraw(/*object*/ obj)
 
     var methods = {
 
-        init: function(options) {
-            console.log("entering init method with options:" + JSON.stringify(options));
+        init: function(options) {           
+            // 
+            if ($.isArray(options)) {
+                options = { numbers: options };
+            }
 
-            var defaults = {
-                    label: "Hi There", 
-                    labelPos: "top", 
-                    strokecolor: "black", 
-                    strokewidth: 2,
-                    id: "piechart",
-                    width: 400,
-                    height: 400
-                        };
+            // "numbers" is a special option, being the actual data we are charting
+            var dataChanged = (options["numbers"] != null);
+            console.log("init(): dataChanged = true");
 
-            options = $.extend(defaults, options);
+            // the options handling should move into the for loop to handle previous options properly for multiple instances
+            var prevoptions = $(this).data();
+            if ($(this).data("hasData") != null) {
 
-            console.log("after default processing the options are: "+JSON.stringify(options));
+                options = $.extend(prevoptions, options);
+            }
+            else {
+                var defaults = {
+                        hasData: true, // not foolproof, if some fool sets in "hasData = null" ?
+                        label: "Hi There", 
+                        labelPos: "top", 
+                        strokecolor: "black", 
+                        strokewidth: 2,
+                        id: "piechart",
+                        width: 400,
+                        height: 400
+                            };
+
+                options = $.extend(defaults, options);
+            }
+
+
+
 
             return this.each(function() {
                 obj = $(this);
-                //console.log("setting data on obj: "+obj.get(0));
+
                 obj.data(options); // this may be overriding previously set options to the defaults, check that
-                console.log("obj.data is now: "+JSON.stringify(obj.data()));
+
                    
                 // want to create a canvas as a child of the current obj
                 if (obj.children("canvas.piechart").length != 0) {
@@ -184,13 +186,7 @@ function doDraw(/*object*/ obj)
                 paper.setup(document.getElementById(canvasid));
 
 
-                var path = paper.Path.Star(paper.view.center, 9, 50, 75);
-                path.fillColor = "purple";
-                path.strokeColor = "red";
-
-                paper.view.draw();
-
-                doDraw(obj);
+                doDraw(obj, dataChanged);
 
             }); // end function(), end this.each, end return
 
@@ -204,10 +200,7 @@ function doDraw(/*object*/ obj)
 
         options: function(options){
 
-             console.log("in options method, argument is: "+options);
-
              var nums = options.data;
-             console.log("options.data: "+nums);
 
              // error checking?
              if (nums != null) {
@@ -230,7 +223,7 @@ function doDraw(/*object*/ obj)
 
 
     $.fn.pieChart = function(methodOrOptions) {
-        console.log("in function(methodOrOptions), argument is "+methodOrOptions);
+        console.log("-----------> in function(methodOrOptions), argument is "+methodOrOptions);
         if (methods[methodOrOptions]) {
             return methods[methodOrOptions].apply(this, Array.prototype.slice.call(arguments, 1));
         } else if ( typeof methodOrOptions === 'object' || ! methodOrOptions ) {
