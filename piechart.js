@@ -1,5 +1,7 @@
 // TODO: 
-// move "numbers" out from all the other options ?
+// move "numbers" out from all the other options ?  probably not
+// review methods.options - how does it get called? Not from the current paperchart.html!
+
 
 // do "width" and "height" actually make sense? should it be "radius" instead?
 
@@ -122,44 +124,38 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged)
 
     var methods = {
 
-        init: function(options) {           
+        init: function(options) {    
+            console.log("==> init(): options are: "+JSON.stringify(options));
             // 
             if ($.isArray(options)) {
                 options = { numbers: options };
             }
 
             // "numbers" is a special option, being the actual data we are charting
+            // so make a note if we have some numbers coming in
             var dataChanged = (options["numbers"] != null);
-            console.log("init(): dataChanged = true");
 
-            // the options handling should move into the for loop to handle previous options properly for multiple instances
-            var prevoptions = $(this).data();
-            if ($(this).data("hasData") != null) {
-
-                options = $.extend(prevoptions, options);
-            }
-            else {
-                var defaults = {
-                        hasData: true, // not foolproof, if some fool sets in "hasData = null" ?
-                        label: "Hi There", 
-                        labelPos: "top", 
+            // TODO: doublecheck the "initialized" mechanism.
+            return this.each(function() {
+                var newOptions = options;
+                obj = $(this);
+                var oldOptions = obj.data();
+                if (oldOptions.initialized == null) {         
+                    oldOptions = {
+                        // Default values for properties that we can't work without
+                        initialized: true, // not foolproof, if some fool sets in "initialized = null" ?
                         strokecolor: "black", 
                         strokewidth: 2,
                         id: "piechart",
                         width: 400,
                         height: 400
-                            };
+                        }; // end oldOptions = {}
+                }
 
-                options = $.extend(defaults, options);
-            }
+                newOptions = $.extend(oldOptions, newOptions);
 
-
-
-
-            return this.each(function() {
-                obj = $(this);
-
-                obj.data(options); // this may be overriding previously set options to the defaults, check that
+                // store the new properties
+                obj.data(newOptions); 
 
                    
                 // want to create a canvas as a child of the current obj
@@ -178,29 +174,31 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged)
               
                 canvas = $('<canvas id="' + canvasid + '" class="canvas" width="' + canvaswidth + '" ' + 
                        'height="' + canvasheight + '" resize="false"></canvas>');
-                canvas.class = "piechart";
+                canvas.class = "piechart";    
 
                 obj.append(canvas);
 
                 paper = new paper.PaperScope();
                 paper.setup(document.getElementById(canvasid));
 
-
                 doDraw(obj, dataChanged);
 
             }); // end function(), end this.each, end return
-
         }, // end init
 
+        // in case we need to call draw from outside this code? 
         draw: function (){  
              var obj = $(this);
              doDraw(obj);
         }, // end draw
 
 
+        //
         options: function(options){
-
-             var nums = options.data;
+             // 
+             // How does this ever get called? is there any point in having this be separate from init? 
+             console.log("==> in options(): args are: "+JSON.stringify(options));
+             var nums = options.data; // is this the right syntax? 
 
              // error checking?
              if (nums != null) {
