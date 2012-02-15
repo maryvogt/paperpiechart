@@ -9,6 +9,7 @@
 
 // multiple canvases
 
+// generate uniqueish id's automatically for different canvases?                               
 
         
 
@@ -16,14 +17,23 @@
 // Helper functions              //
 //-------------------------------//
 
+
 // obj is the div tag which contains the canvas for paper to draw the pie chart on
-function doDraw(/*object*/ obj, /* boolean */ dataChanged)
+function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 {
+    
+    if (scope == null) {
+        // may be stored in obj.data
+        scope = obj.data("paperscope");
+        if (scope == null) {
+            return false;
+        }
+    }
     // if we already have paths, can we just reuse them?
     var paths = obj.data("paths");
     if (paths != null) {
         if (!dataChanged) {
-            paper.view.draw();
+            scope.view.draw();
             return true;
         }
         else // data has changed, have to remove the old paths
@@ -37,7 +47,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged)
 
     var nums = obj.data('numbers');
     if (nums == null) {
-        var text = new paper.PointText(paper.view.center);
+        var text = new scope.PointText(scope.view.center);
         text.fillColor = "black";
         text.content = "No data for pie chart."
     }
@@ -53,12 +63,13 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged)
         }
 
         // calculate center and radius for the pie chart
-        var center = paper.view.center;
+        var center = scope.view.center.clone();
+        console.log('center: ' + center);
         var radius;
-        if (paper.view.size.width < paper.view.size.height) {
-            radius = paper.view.size.width / 2;
+        if (scope.view.size.width < scope.view.size.height) {
+            radius = scope.view.size.width / 2;
         } else {
-            radius = paper.view.size.height / 2;
+            radius = scope.view.size.height / 2;
         }
 
         radius -= 5; // bring it in a little so the edge doesn't get cut off  (adjusting this for strokewidth would be nice)
@@ -67,7 +78,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged)
         // from the Paper project if the data changes
         paths = new Array;
 
-        var start = new paper.Point(center.x + radius, center.y );      // first wedge starts at 3:00
+        var start = new scope.Point(center.x + radius, center.y );      // first wedge starts at 3:00
         var through;
         var to;
         var throughangle= 0;
@@ -75,7 +86,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged)
 
         for (i = 0; i < nums.length; i++, start = to) {
             // each path starts at the center,
-            paths[i] = new paper.Path(center);
+            paths[i] = new scope.Path(center);
             // goes straight out to the current startpoint,
             paths[i].add(start);
 
@@ -84,11 +95,11 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged)
             throughangle = totalangle + angles[i]/2;
             totalangle = totalangle + angles[i];
 
-            through = new paper.Point(radius * Math.cos(throughangle) + center.x, 
+            through = new scope.Point(radius * Math.cos(throughangle) + center.x, 
                                       radius * Math.sin(throughangle) + center.y);
 
 
-            to = new paper.Point(radius * Math.cos(totalangle) + center.x,
+            to = new scope.Point(radius * Math.cos(totalangle) + center.x,
                                  radius * Math.sin(totalangle) + center.y);
 
 
@@ -108,7 +119,8 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged)
             obj.data("paths", paths);
 
         } // end for
-        paper.view.draw();
+
+        scope.view.draw();
     }     // end if nums != null
 
 
@@ -137,8 +149,11 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged)
 
             // TODO: doublecheck the "initialized" mechanism.
             return this.each(function() {
+
+                console.log("init(): iterating over selector, current iteration is "+this.id);
                 var newOptions = options;
                 obj = $(this);
+
                 var oldOptions = obj.data();
                 if (oldOptions.initialized == null) {         
                     oldOptions = {
@@ -159,29 +174,36 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged)
 
                    
                 // want to create a canvas as a child of the current obj
-                if (obj.children("canvas.piechart").length != 0) {
+                if (obj.children("canvas.piechart").length === 0) {
+                    var canvas;
+                    var canvasid = obj.data("id");
+                    var canvaswidth = obj.data("width");
+                    var canvasheight = obj.data("height");
+    
+                    
+                    console.log("init(): creating canvas, id = "+canvasid+", width = "+canvaswidth+", height = "+canvasheight);
+                  
+                    canvas = $('<canvas id="' + canvasid + '" width="' + canvaswidth + '" ' + 
+                           'height="' + canvasheight + '"></canvas>');
+                    canvas.addClass("piechart");
+                    canvas.css('background', '#' + Math.floor(Math.random()*16777215).toString(16));
+    
+                    console.log('canvaswidth: ' + canvaswidth);
+                    
+                    obj.append(canvas);
                     // already have one, we're good
-                    console.log("returning without creating canvas");
-                    console.log("because we have this many: "+ obj.children("canvas").length);
-                    return true;
+                    //console.log("returning without creating canvas");
+                    //console.log("because we have this many: "+ obj.children("canvas").length);
+                    //return true;
+
+                    // just to be clear that we are not using a global variable named "paper"
+                    var paperscope = new paper.PaperScope();                                 
+                    paperscope.setup(document.getElementById(canvasid));                     
+                    obj.data("paperscope", paperscope);                                      
+
                 }
 
-                var canvas;
-                var canvasid = obj.data("id");
-                var canvaswidth = obj.data("width");
-                var canvasheight = obj.data("height");
-
-              
-                canvas = $('<canvas id="' + canvasid + '" class="canvas" width="' + canvaswidth + '" ' + 
-                       'height="' + canvasheight + '" resize="false"></canvas>');
-                canvas.class = "piechart";    
-
-                obj.append(canvas);
-
-                paper = new paper.PaperScope();
-                paper.setup(document.getElementById(canvasid));
-
-                doDraw(obj, dataChanged);
+                doDraw(obj, dataChanged, obj.data("paperscope"));
 
             }); // end function(), end this.each, end return
         }, // end init

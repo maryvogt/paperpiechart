@@ -13,14 +13,17 @@
     //
     $(document).ready(function(){
         console.log("calling pieChart()");
-            $('#piechartdiv').pieChart({ numbers: [64, 32, 16, 8, 4, 2, 1], strokecolor: "pink"}); 
+            $('#piechartdiv').pieChart({ width: 250, height: 250, 
+                numbers: [1, 2, 1, 2, 1, 2, 1, 2], strokecolor: "blue"}); 
+
+            $('#div2').pieChart({ id: "piechart2", width: 200, height: 200, 
+                numbers: [64, 32, 16, 8, 4, 2, 1], strokecolor: "pink"}); 
         //$('#piechartdiv').pieChart([64, 32, 16, 8, 4, 2, 1]); 
 
 });                     // end document ready
 
 
-    
-	/*$(function() {
+                                                                                                            /*$(function() {
 		$( "#piechart" ).datepicker({ minDate: -20, maxDate: "+1M +10D" });
 	});          */
 	</script>
@@ -30,9 +33,12 @@
 <h1>PaperChart</h1>
 
     <button id="pushme" onclick="$('#piechartdiv').pieChart({ strokecolor: 'blue', strokewidth: 5, numbers: [24, 12, 24, 12, 24, 6, 4]});">push me</button>
+    <button id="pushme2" onclick="$('#div2').pieChart({strokecolor: 'purple', numbers: [1, 1, 1, 1, 10]});">push me too</button>
 
-    <div id="piechartdiv">
+<table><tr>
+    <td>Chart 1:<div id="piechartdiv"> </div></td>
 
-    </div>
+
+    <td>Chart 2: <div id="div2"></div></td></tr></table>
 </body>
 </html>                             
