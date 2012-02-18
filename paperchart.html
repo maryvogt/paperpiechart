@@ -13,11 +13,14 @@
     //
     $(document).ready(function(){
         console.log("calling pieChart()");
-            $('#piechartdiv').pieChart({ width: 250, height: 250, 
+            $('#piechartdiv').pieChart({ radius: 250,
                 numbers: [1, 2, 1, 2, 1, 2, 1, 2], strokecolor: "blue"}); 
 
-            $('#div2').pieChart({ id: "piechart2", width: 200, height: 200, 
-                numbers: [64, 32, 16, 8, 4, 2, 1], strokecolor: "pink"}); 
+            $('#div2').pieChart({ id: "piechart2", radius:300,
+                numbers: [64, 32, 16, 8, 4, 2, 1], strokecolor: "pink", strokewidth: 0});
+                
+            $('#div3').pieChart({ id: "piechart3", radius: 350,
+                numbers: [1, 24, 32, 1, 10], strokecolor: "red"}); 
         //$('#piechartdiv').pieChart([64, 32, 16, 8, 4, 2, 1]); 
 
 });                     // end document ready
@@ -34,11 +37,15 @@
 
     <button id="pushme" onclick="$('#piechartdiv').pieChart({ strokecolor: 'blue', strokewidth: 5, numbers: [24, 12, 24, 12, 24, 6, 4]});">push me</button>
     <button id="pushme2" onclick="$('#div2').pieChart({strokecolor: 'purple', numbers: [1, 1, 1, 1, 10]});">push me too</button>
+    <button id="pushme3" onclick="$('#div3').pieChart({strokecolor: 'cyan', numbers: [1, 24, 32, 32, 10]});">push me three</button>
 
 <table><tr>
     <td>Chart 1:<div id="piechartdiv"> </div></td>
 
 
-    <td>Chart 2: <div id="div2"></div></td></tr></table>
+    <td>Chart 2: <div id="div2"></div></td>
+    
+    <td>Chart 3:<div id="div3"> </div></td>
+    </tr></table>
 </body>
 </html>                             

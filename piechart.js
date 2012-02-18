@@ -7,7 +7,6 @@
 
 // label placement
 
-// multiple canvases
 
 // generate uniqueish id's automatically for different canvases?                               
 
@@ -115,6 +114,10 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 
             // random colors for debugging
             paths[i].fillColor = '#' + Math.floor(Math.random()*16777215).toString(16);    
+            
+            if (paths[i].strokeWidth == 0) {
+                paths[i].strokeColor = paths[i].fillColor;
+            }
 
             obj.data("paths", paths);
 
@@ -162,8 +165,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                         strokecolor: "black", 
                         strokewidth: 2,
                         id: "piechart",
-                        width: 400,
-                        height: 400
+                        radius: 400,
                         }; // end oldOptions = {}
                 }
 
@@ -177,18 +179,18 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                 if (obj.children("canvas.piechart").length === 0) {
                     var canvas;
                     var canvasid = obj.data("id");
-                    var canvaswidth = obj.data("width");
-                    var canvasheight = obj.data("height");
+                    var radius = obj.data("radius");  
+                    radius += 4; // padding so that strokes don't get cut off at the edges
     
-                    
-                    console.log("init(): creating canvas, id = "+canvasid+", width = "+canvaswidth+", height = "+canvasheight);
+                    // as we add label options, the layout will get more complex, but right now let's just splat the thing in the middle of a canvas
+                    console.log("init(): creating canvas, id = "+canvasid+", radius = "+radius);
                   
-                    canvas = $('<canvas id="' + canvasid + '" width="' + canvaswidth + '" ' + 
-                           'height="' + canvasheight + '"></canvas>');
+                    canvas = $('<canvas id="' + canvasid + '" width="' + radius + '" ' + 
+                           'height="' + radius + '"></canvas>');
                     canvas.addClass("piechart");
                     canvas.css('background', '#' + Math.floor(Math.random()*16777215).toString(16));
     
-                    console.log('canvaswidth: ' + canvaswidth);
+                    
                     
                     obj.append(canvas);
                     // already have one, we're good
@@ -203,6 +205,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 
                 }
 
+                paper = obj.data("paperscope");
                 doDraw(obj, dataChanged, obj.data("paperscope"));
 
             }); // end function(), end this.each, end return
