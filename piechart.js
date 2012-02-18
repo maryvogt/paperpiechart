@@ -8,7 +8,9 @@
 // choose your starting angle
 
 
-// generate uniqueish id's automatically for different canvases?                               
+// generate uniqueish id's automatically for different canvases?         
+
+// what exactly do I need to cleanup?                        
 
         
 // 
@@ -55,10 +57,13 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
     }
 
     var nums = obj.data('numbers');
+
     if (nums == null) {
+        console.log("No data for pie chart!!!");
         var text = new scope.PointText(scope.view.center);
+        text.content = "No data for pie chart.";
         text.fillColor = "black";
-        text.content = "No data for pie chart."
+        text.justification = "center";
     }
     if (nums != null) {
         // if we have numbers, we made sure it was an array when it was set in
@@ -184,10 +189,10 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
         obj.data("labelPaths", labelPaths);
         obj.data("textItems", textItems);
 
-        scope.view.draw();
     }     // end if nums != null
 
-
+    
+    scope.view.draw();
 }
 
 
@@ -247,8 +252,16 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                     var canvasid = obj.data("id");
                     
                     var radius = obj.data("radius");  
+                    var canvassize; 
                     // TODO: padding must be adjustable
-                    var canvassize = 2.5 * radius + 50;
+                    
+                    if (obj.data("width") == null) {
+                        canvassize = 2.5 * radius + 50;
+                    }
+                    else {
+                        canvassize = obj.data("width");
+                    }
+
 
     
                     // as we add label options, the layout will get more complex, but right now let's just splat the thing in the middle of a canvas

@@ -16,7 +16,7 @@
 
         $('#div0').pieChart({numbers: [30, 50, 80], id: "piechart0"});
         $('#div1').pieChart({   radius: 100,
-                                numbers: [1, 2, 1, 2, 1, 2, 1, 2], 
+                                //numbers: [1, 2, 1, 2, 1, 2, 1, 2], 
                                 colors: ["red", "orange", "yellow", "green", "turquoise", "blue", "violet", "magenta"],
                                 strokewidth: 5,
                                 strokecolor: "yellow"   });          
@@ -24,7 +24,9 @@
         $('#div2').pieChart({ id: "piechart2", radius:140,
                                 colors: ["#00FFCC", "#00D9BD", "#00B2AD", "#008099", "#00598A", "#002675", "#000066"],
                                 numbers: [64, 32, 16, 8, 4, 2, 1],
-                                names: ["Amy", "Basil", "Claude", "Doris", "Egbert", "Flora", "George"]});
+                                names: ["Amy", "Basil", "Claude", "Doris", "Egbert", "Flora", "George"],
+                                width: 600 
+        });
                             
 
         $('#div3').pieChart({   id: "piechart3", 
@@ -45,11 +47,6 @@
     <button id="pushme2" onclick="$('#div2').pieChart({strokecolor: 'purple', numbers: [1, 1, 1, 1, 10]});">push me too</button>
     <button id="pushme3" onclick="$('#div3').pieChart({strokecolor: 'cyan', numbers: [1, 24, 32, 32, 10]});">push me three</button>
 
-<table>
-    <tr>
-    <td>Defaults: <div id="def"></div> </td></tr>
-    <tr><td><div id="div0"></div></td></tr>
-</table>
 
 <table>
     <tr>
@@ -57,5 +54,13 @@
     <td>Chart 2: <div id="div2"></div></td>
     <td>Chart 3:<div id="div3"></div></td>
     </tr></table>
+
+
+<table>
+    <tr>
+    <td>Defaults: <div id="def"></div> </td></tr>
+    <tr><td><div id="div0"></div></td></tr>
+</table>
+
 </body>
 </html>                             
