@@ -38,28 +38,23 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
         }
     }
     // if we already have paths, can we just reuse them?
-    var paths = obj.data("paths");
 
-    if (paths != null) {
-        if (!dataChanged) {
-            scope.view.draw();
-            return true;
-        }
-        else // data has changed, have to remove the old paths
-        {
-            for (var i = 0; i < wedgePaths.length; i++) {
-                wedgePaths[i].remove();
-                labelPaths[i].remove();
-                textItems[i].remove();
-            }
-
+    var paperItems = obj.data("paperItems");
+    if (paperItems != null && !dataChanged) {
+        scope.view.draw();
+        return true;
+    }
+    else if (paperItems != null) // data has changed, have to remove the old paper items
+    {
+        for (var i = 0; i < paperItems.length; i++) {
+            paperItems[i].remove();
         }
     }
+    
 
     var nums = obj.data('numbers');
 
     if (nums == null) {
-        console.log("No data for pie chart!!!");
         var text = new scope.PointText(scope.view.center);
         text.content = "No data for pie chart.";
         text.fillColor = "black";
@@ -81,16 +76,16 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 
         var radius = obj.data("radius");
 
+        var paperItems = obj.data("paperItems");
+        if (paperItems == null) {
+            paperItems = new Array;
+            obj.data("paperItems", paperItems);
+        }
 
-
-        // we are going to keep the Path objects around so that we can remove them
-        // from the Paper project if the data changes
-
-        // TODO: tidier if it is an array of objects instead of a group of arrays
-        
-        var wedgePaths = new Array;
-        var labelPaths = new Array;
-        var textItems = new Array;
+        // these are all Items from PaperScript that need to be removed when we are done with them later
+        var wedgePath;
+        var labelPath;
+        var textItem;
 
         var start = new scope.Point(center.x + radius, center.y );      // first wedge starts at 3:00
         var through;
@@ -100,11 +95,15 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 
         var fillcolors = obj.data("colors");
 
+        
+
         for (i = 0; i < nums.length; i++, start = to) {
             // each path starts at the center,
-            wedgePaths[i] = new scope.Path(center);
+            wedgePath = new scope.Path(center);
+            paperItems.push(wedgePath);   // add to the list of paper Items that will be cleaned up
+
             // goes straight out to the current startpoint,
-            wedgePaths[i].add(start);
+            wedgePath.add(start);
 
             // makes an arc along the perimeter of the circle
             //    "through" is halfway along the circle (explain this better)
@@ -119,29 +118,28 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                                  radius * Math.sin(totalangle) + center.y);
 
 
-            wedgePaths[i].arcTo(through, to);
+            wedgePath.arcTo(through, to);
 
             // back to the center
-            wedgePaths[i].closePath();
+            wedgePath.closePath();
 
             // color it in
 
-            wedgePaths[i].strokeColor = obj.data("strokecolor");
-            wedgePaths[i].strokeWidth = obj.data("strokewidth");
+            wedgePath.strokeColor = obj.data("strokecolor");
+            wedgePath.strokeWidth = obj.data("strokewidth");
 
             // random colors for debugging
             if (fillcolors != null) {
-                wedgePaths[i].fillColor = fillcolors[i];
+                wedgePath.fillColor = fillcolors[i];
 //                console.log("doDraw: setting wedge color to "+fillcolors[i]);
             } else {
-                console.log("doDraw(): picking a random color for wedge");
-                wedgePaths[i].fillColor = '#' + Math.floor(Math.random()*16777215).toString(16);    
+                wedgePath.fillColor = '#' + Math.floor(Math.random()*16777215).toString(16);    
             }
 
             
             
-            if (wedgePaths[i].strokeWidth == 0) {
-                wedgePaths[i].strokeColor = wedgePaths[i].fillColor;
+            if (wedgePath.strokeWidth == 0) {
+                wedgePath.strokeColor = wedgePath.fillColor;
             }
 
 
@@ -159,35 +157,33 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                 labelEnd = new scope.Point(labelTurn.x - 15, labelTurn.y);
             }
 
-            labelPaths[i] = new scope.Path(labelStart);
-            labelPaths[i].add(labelTurn);
-            labelPaths[i].add(labelEnd);
+            
+            labelPath = new scope.Path(labelStart);
+            labelPath.add(labelTurn);
+            labelPath.add(labelEnd);
+            paperItems.push(labelPath);
 
-            labelPaths[i].strokeWidth = 1;
-            labelPaths[i].strokeColor = "black";
+            labelPath.strokeWidth = 1;
+            labelPath.strokeColor = "black";
 
             // aaaand, the labels themselves 
 
             labelEnd.y += 5;    // TODO, make this little tweak more real
             
-            textItems[i] = new scope.PointText(labelEnd);
-            textItems[i].fillColor = "black";
+            textItem = new scope.PointText(labelEnd);
+            textItem.fillColor = "black";
             if (obj.data("names") != null) {
-                textItems[i].content = obj.data("names")[i] + ": "+nums[i].toString();
+                textItem.content = obj.data("names")[i] + ": "+nums[i].toString();
             } else {
-                textItems[i].content = nums[i].toString();
+                textItem.content = nums[i].toString();
             }
 
-            textItems[i].justification = (labelEnd.x >= center.x) ? "left" : "right";
+            textItem.justification = (labelEnd.x >= center.x) ? "left" : "right";
             
 
 
         } // end for
 
-
-        obj.data("wedgePaths", wedgePaths);
-        obj.data("labelPaths", labelPaths);
-        obj.data("textItems", textItems);
 
     }     // end if nums != null
 
@@ -206,7 +202,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
     var methods = {
 
         init: function(options) {    
-            console.log("==> init(): options are: "+JSON.stringify(options));
+
             // 
             if ($.isArray(options)) {
                 options = { numbers: options };
@@ -219,7 +215,6 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
             // TODO: doublecheck the "initialized" mechanism.
             return this.each(function() {
 
-                console.log("init(): iterating over selector, current iteration is "+this.id);
                 var newOptions = options;
                 obj = $(this);
 
@@ -227,7 +222,6 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 //                console.log("init(): oldOptions are: "+JSON.stringify(oldOptions));
                 if (oldOptions == null || oldOptions.initialized == null) {         
                     oldOptions = piechartDefaults;
-                    console.log("init(): initializing to defaults");
                 }
 
 
@@ -238,9 +232,6 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                 }
 
                 newOptions.initialized = "true";
-                console.log("init(): newOptions are: " + JSON.stringify(newOptions));
-                console.log("...and piechartDefaults are..." +JSON.stringify(piechartDefaults));
-
 
                 // store the new properties
                 obj.data(newOptions); 
@@ -265,7 +256,6 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 
     
                     // as we add label options, the layout will get more complex, but right now let's just splat the thing in the middle of a canvas
-                    console.log("init(): creating canvas, id = "+canvasid+", radius = "+radius);
                   
                     canvas = $('<canvas id="' + canvasid + '" width="' + canvassize + '" ' + 
                            'height="' + canvassize + '"></canvas>');
@@ -326,7 +316,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 
 
     $.fn.pieChart = function(methodOrOptions) {
-        console.log("-----------> in function(methodOrOptions), argument is "+methodOrOptions);
+
         if (methods[methodOrOptions]) {
             return methods[methodOrOptions].apply(this, Array.prototype.slice.call(arguments, 1));
         } else if ( typeof methodOrOptions === 'object' || ! methodOrOptions ) {
