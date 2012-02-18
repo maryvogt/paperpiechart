@@ -3,15 +3,23 @@
 // review methods.options - how does it get called? Not from the current paperchart.html!
 
 
-// do "width" and "height" actually make sense? should it be "radius" instead?
-
 // label placement
+
+// choose your starting angle
 
 
 // generate uniqueish id's automatically for different canvases?                               
 
         
-
+// 
+var piechartDefaults = {
+    // Default values for properties that we can't work without
+    strokecolor: "black", 
+    strokewidth: 0,
+    id: "piechart",
+    radius: 400,
+}; 
+                
 //-------------------------------//
 // Helper functions              //
 //-------------------------------//
@@ -20,7 +28,7 @@
 // obj is the div tag which contains the canvas for paper to draw the pie chart on
 function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 {
-    
+
     if (scope == null) {
         // may be stored in obj.data
         scope = obj.data("paperscope");
@@ -30,6 +38,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
     }
     // if we already have paths, can we just reuse them?
     var paths = obj.data("paths");
+
     if (paths != null) {
         if (!dataChanged) {
             scope.view.draw();
@@ -63,7 +72,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 
         // calculate center and radius for the pie chart
         var center = scope.view.center.clone();
-        console.log('center: ' + center);
+
         var radius;
         if (scope.view.size.width < scope.view.size.height) {
             radius = scope.view.size.width / 2;
@@ -71,10 +80,11 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
             radius = scope.view.size.height / 2;
         }
 
-        radius -= 5; // bring it in a little so the edge doesn't get cut off  (adjusting this for strokewidth would be nice)
+
 
         // we are going to keep the Path objects around so that we can remove them
         // from the Paper project if the data changes
+
         paths = new Array;
 
         var start = new scope.Point(center.x + radius, center.y );      // first wedge starts at 3:00
@@ -82,6 +92,8 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
         var to;
         var throughangle= 0;
         var totalangle = 0;
+
+        var fillcolors = obj.data("colors");
 
         for (i = 0; i < nums.length; i++, start = to) {
             // each path starts at the center,
@@ -113,7 +125,15 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
             paths[i].strokeWidth = obj.data("strokewidth");
 
             // random colors for debugging
-            paths[i].fillColor = '#' + Math.floor(Math.random()*16777215).toString(16);    
+            if (fillcolors != null) {
+                paths[i].fillColor = fillcolors[i];
+//                console.log("doDraw: setting wedge color to "+fillcolors[i]);
+            } else {
+                console.log("doDraw(): picking a random color for wedge");
+                paths[i].fillColor = '#' + Math.floor(Math.random()*16777215).toString(16);    
+            }
+
+            
             
             if (paths[i].strokeWidth == 0) {
                 paths[i].strokeColor = paths[i].fillColor;
@@ -158,29 +178,32 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                 obj = $(this);
 
                 var oldOptions = obj.data();
+                console.log("init(): oldOptions are: "+JSON.stringify(oldOptions));
                 if (oldOptions.initialized == null) {         
-                    oldOptions = {
-                        // Default values for properties that we can't work without
-                        initialized: true, // not foolproof, if some fool sets in "initialized = null" ?
-                        strokecolor: "black", 
-                        strokewidth: 2,
-                        id: "piechart",
-                        radius: 400,
-                        }; // end oldOptions = {}
+                    oldOptions = piechartDefaults;
+                    console.log("init(): initializing to defaults");
                 }
 
-                newOptions = $.extend(oldOptions, newOptions);
+                // merge two or more objects, modifying the first
+
+                $.extend({}, oldOptions, newOptions);
+
+                newOptions.initialized = "true";
+                console.log("init(): newOptions are: " + JSON.stringify(newOptions));
+                console.log("...and piechartDefaults are..." +JSON.stringify(piechartDefaults));
+
 
                 // store the new properties
                 obj.data(newOptions); 
-
+                
                    
                 // want to create a canvas as a child of the current obj
                 if (obj.children("canvas.piechart").length === 0) {
                     var canvas;
                     var canvasid = obj.data("id");
+                    
                     var radius = obj.data("radius");  
-                    radius += 4; // padding so that strokes don't get cut off at the edges
+                    radius += 10; // padding so that strokes don't get cut off at the edges - should adjust
     
                     // as we add label options, the layout will get more complex, but right now let's just splat the thing in the middle of a canvas
                     console.log("init(): creating canvas, id = "+canvasid+", radius = "+radius);
@@ -188,7 +211,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                     canvas = $('<canvas id="' + canvasid + '" width="' + radius + '" ' + 
                            'height="' + radius + '"></canvas>');
                     canvas.addClass("piechart");
-                    canvas.css('background', '#' + Math.floor(Math.random()*16777215).toString(16));
+                    //canvas.css('background', '#' + Math.floor(Math.random()*16777215).toString(16));
     
                     
                     
@@ -198,7 +221,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                     //console.log("because we have this many: "+ obj.children("canvas").length);
                     //return true;
 
-                    // just to be clear that we are not using a global variable named "paper"
+                    // set up a PaperScope for drawing
                     var paperscope = new paper.PaperScope();                                 
                     paperscope.setup(document.getElementById(canvasid));                     
                     obj.data("paperscope", paperscope);                                      
