@@ -16,8 +16,7 @@ var piechartDefaults = {
     // Default values for properties that we can't work without
     strokecolor: "black", 
     strokewidth: 0,
-    id: "piechart",
-    radius: 400,
+    radius: 400
 }; 
                 
 //-------------------------------//
@@ -46,8 +45,10 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
         }
         else // data has changed, have to remove the old paths
         {
-            for (var i = 0; i < paths.length; i++) {
-                paths[i].remove();
+            for (var i = 0; i < wedgePaths.length; i++) {
+                wedgePaths[i].remove();
+                labelPaths[i].remove();
+                textItems[i].remove();
             }
 
         }
@@ -73,19 +74,18 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
         // calculate center and radius for the pie chart
         var center = scope.view.center.clone();
 
-        var radius;
-        if (scope.view.size.width < scope.view.size.height) {
-            radius = scope.view.size.width / 2;
-        } else {
-            radius = scope.view.size.height / 2;
-        }
+        var radius = obj.data("radius");
 
 
 
         // we are going to keep the Path objects around so that we can remove them
         // from the Paper project if the data changes
 
-        paths = new Array;
+        // TODO: tidier if it is an array of objects instead of a group of arrays
+        
+        var wedgePaths = new Array;
+        var labelPaths = new Array;
+        var textItems = new Array;
 
         var start = new scope.Point(center.x + radius, center.y );      // first wedge starts at 3:00
         var through;
@@ -97,9 +97,9 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 
         for (i = 0; i < nums.length; i++, start = to) {
             // each path starts at the center,
-            paths[i] = new scope.Path(center);
+            wedgePaths[i] = new scope.Path(center);
             // goes straight out to the current startpoint,
-            paths[i].add(start);
+            wedgePaths[i].add(start);
 
             // makes an arc along the perimeter of the circle
             //    "through" is halfway along the circle (explain this better)
@@ -114,34 +114,75 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                                  radius * Math.sin(totalangle) + center.y);
 
 
-            paths[i].arcTo(through, to);
+            wedgePaths[i].arcTo(through, to);
 
             // back to the center
-            paths[i].closePath();
+            wedgePaths[i].closePath();
 
             // color it in
 
-            paths[i].strokeColor = obj.data("strokecolor");
-            paths[i].strokeWidth = obj.data("strokewidth");
+            wedgePaths[i].strokeColor = obj.data("strokecolor");
+            wedgePaths[i].strokeWidth = obj.data("strokewidth");
 
             // random colors for debugging
             if (fillcolors != null) {
-                paths[i].fillColor = fillcolors[i];
+                wedgePaths[i].fillColor = fillcolors[i];
 //                console.log("doDraw: setting wedge color to "+fillcolors[i]);
             } else {
                 console.log("doDraw(): picking a random color for wedge");
-                paths[i].fillColor = '#' + Math.floor(Math.random()*16777215).toString(16);    
+                wedgePaths[i].fillColor = '#' + Math.floor(Math.random()*16777215).toString(16);    
             }
 
             
             
-            if (paths[i].strokeWidth == 0) {
-                paths[i].strokeColor = paths[i].fillColor;
+            if (wedgePaths[i].strokeWidth == 0) {
+                wedgePaths[i].strokeColor = wedgePaths[i].fillColor;
             }
 
-            obj.data("paths", paths);
+
+            // okay great, now let's put some label markers in here
+            // TODO: tweak and maybe optionize the hardcoded numbers here
+            // TODO: how to deal when the line goes straight up or down?
+            var labelStart = new scope.Point( 0.5 * radius * Math.cos(throughangle) + center.x,
+                                              0.5 * radius * Math.sin(throughangle) + center.y);
+            var labelTurn = new scope.Point( 1.25 * radius * Math.cos(throughangle) + center.x,
+                                             1.25 * radius * Math.sin(throughangle) + center.y);
+            var labelEnd;
+            if (labelTurn.x >= center.x) { // turn right
+                labelEnd = new scope.Point(labelTurn.x + 15, labelTurn.y);
+            } else {
+                labelEnd = new scope.Point(labelTurn.x - 15, labelTurn.y);
+            }
+
+            labelPaths[i] = new scope.Path(labelStart);
+            labelPaths[i].add(labelTurn);
+            labelPaths[i].add(labelEnd);
+
+            labelPaths[i].strokeWidth = 1;
+            labelPaths[i].strokeColor = "black";
+
+            // aaaand, the labels themselves 
+
+            labelEnd.y += 5;    // TODO, make this little tweak more real
+            
+            textItems[i] = new scope.PointText(labelEnd);
+            textItems[i].fillColor = "black";
+            if (obj.data("names") != null) {
+                textItems[i].content = obj.data("names")[i] + ": "+nums[i].toString();
+            } else {
+                textItems[i].content = nums[i].toString();
+            }
+
+            textItems[i].justification = (labelEnd.x >= center.x) ? "left" : "right";
+            
+
 
         } // end for
+
+
+        obj.data("wedgePaths", wedgePaths);
+        obj.data("labelPaths", labelPaths);
+        obj.data("textItems", textItems);
 
         scope.view.draw();
     }     // end if nums != null
@@ -177,16 +218,19 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                 var newOptions = options;
                 obj = $(this);
 
-                var oldOptions = obj.data();
-                console.log("init(): oldOptions are: "+JSON.stringify(oldOptions));
-                if (oldOptions.initialized == null) {         
+                var oldOptions = obj.data("options");
+//                console.log("init(): oldOptions are: "+JSON.stringify(oldOptions));
+                if (oldOptions == null || oldOptions.initialized == null) {         
                     oldOptions = piechartDefaults;
                     console.log("init(): initializing to defaults");
                 }
 
-                // merge two or more objects, modifying the first
 
-                $.extend({}, oldOptions, newOptions);
+                for (var i in oldOptions ) {
+                    if (newOptions[i] == null) {
+                        newOptions[i] = oldOptions[i];
+                    }
+                }
 
                 newOptions.initialized = "true";
                 console.log("init(): newOptions are: " + JSON.stringify(newOptions));
@@ -203,15 +247,20 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                     var canvasid = obj.data("id");
                     
                     var radius = obj.data("radius");  
-                    radius += 10; // padding so that strokes don't get cut off at the edges - should adjust
+                    // TODO: padding must be adjustable
+                    var canvassize = 2.5 * radius + 50;
+
     
                     // as we add label options, the layout will get more complex, but right now let's just splat the thing in the middle of a canvas
                     console.log("init(): creating canvas, id = "+canvasid+", radius = "+radius);
                   
-                    canvas = $('<canvas id="' + canvasid + '" width="' + radius + '" ' + 
-                           'height="' + radius + '"></canvas>');
+                    canvas = $('<canvas id="' + canvasid + '" width="' + canvassize + '" ' + 
+                           'height="' + canvassize + '"></canvas>');
                     canvas.addClass("piechart");
                     //canvas.css('background', '#' + Math.floor(Math.random()*16777215).toString(16));
+                    var bkgcolor = Math.floor(Math.random()*16777215) | 0xc0c0c0;
+
+                    canvas.css('background', '#' + bkgcolor.toString(16));
     
                     
                     
@@ -253,12 +302,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                 if ($.isArray(nums)) {
                     // set in the new data
                     $(this).data("numbers", nums); 
-                    var paths = $(this).data("paths");
-                    if (paths != null && $.isArray(paths)) {
-                        for (var i = 0; i < paths.length; i++) {
-                            paths[i].remove(); // removes old paths from project
-                        }
-                    }
+                    doDraw($(this), true, $(this).data("paperscope"));
                 } else {
                     throw "Passed-in data must be an array.";
                 }
