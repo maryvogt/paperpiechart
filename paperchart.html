@@ -24,10 +24,16 @@
         $('#div2').pieChart({ id: "piechart2", radius:140,
                                 colors: ["#00FFCC", "#00D9BD", "#00B2AD", "#008099", "#00598A", "#002675", "#000066"],
                                 numbers: [64, 32, 16, 8, 4, 2, 1],
-                                names: ["Amy", "Basil", "Claude", "Doris", "Egbert", "Flora", "George"],
-                                width: 600 
-        });
-                            
+                                names: ["Amy", "Basil", "Claude", "Doris", "Egbert", "Flora", "George"]
+         });
+
+
+        
+        $('#div2').children('canvas').css("background", "orange");
+
+
+        //$('#div2').children('canvas').prop("width", 402);
+        //$('#div2').pieChart["draw"]();
 
         $('#div3').pieChart({   id: "piechart3", 
                                 radius: 75,
@@ -46,6 +52,8 @@
     <button id="pushme" onclick="$('#div1').pieChart({ strokecolor: 'blue', strokewidth: 5, numbers: [24, 12, 24, 12, 24, 6, 4]});">push me</button>
     <button id="pushme2" onclick="$('#div2').pieChart({strokecolor: 'purple', numbers: [1, 1, 1, 1, 10]});">push me too</button>
     <button id="pushme3" onclick="$('#div3').pieChart({strokecolor: 'cyan', numbers: [1, 24, 32, 32, 10]});">push me three</button>
+    <button id="pushme4" onclick="$('#div2').css('width', '602px'); $('div2').pieChart(); $('#div2').children('canvas').css('background', 'lime');">resize chart 2</button>
+    
 
 
 <table>

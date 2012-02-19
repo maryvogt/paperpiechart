@@ -1,6 +1,10 @@
 // TODO: 
+
+// go back to width and height; corresponding layout work
+
 // move "numbers" out from all the other options ?  probably not
 // review methods.options - how does it get called? Not from the current paperchart.html!
+
 
 
 // label placement
@@ -11,6 +15,8 @@
 // generate uniqueish id's automatically for different canvases?         
 
 // what exactly do I need to cleanup?                        
+
+// can the user get values back from the pie chart? 
 
         
 // 
@@ -25,15 +31,19 @@ var piechartDefaults = {
 // Helper functions              //
 //-------------------------------//
 
+function doDraw()
+{
+    doDraw($(this), false, $(this).data("paperscope"));
+}
 
 // obj is the div tag which contains the canvas for paper to draw the pie chart on
 function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 {
-
     if (scope == null) {
         // may be stored in obj.data
         scope = obj.data("paperscope");
         if (scope == null) {
+            console.log("doDraw(): paperscope is null");
             return false;
         }
     }
@@ -211,7 +221,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 
             // "numbers" is a special option, being the actual data we are charting
             // so make a note if we have some numbers coming in
-            var dataChanged = (options["numbers"] != null);
+            var dataChanged = (options != null) && (options["numbers"] != null);
 //            console.log("init(): dataChanged is "+dataChanged);
 
             // TODO: doublecheck the "initialized" mechanism.
@@ -261,23 +271,42 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                   
                     canvas = $('<canvas id="' + canvasid + '" width="' + canvassize + '" ' + 
                            'height="' + canvassize + '"></canvas>');
+                    obj.css({
+                        'width': canvassize + 'px',
+                        'height': canvassize + 'px'
+                    });
                     canvas.addClass("piechart");
                     //canvas.css('background', '#' + Math.floor(Math.random()*16777215).toString(16));
                     var bkgcolor = Math.floor(Math.random()*16777215) | 0xc0c0c0;
 
                     canvas.css('background', '#' + bkgcolor.toString(16));
-    
-                    
-                    
-                    obj.append(canvas);
-                    // already have one, we're good
-                    //console.log("returning without creating canvas");
-                    //console.log("because we have this many: "+ obj.children("canvas").length);
-                    //return true;
 
-                    // set up a PaperScope for drawing
+                    obj.append(canvas);
+
+                    $(window).resize(function() {
+                        console.log('window resize...');
+                    });
+
+                    obj.resize(function() {
+                        console.log('resize parent...');
+                    });
+    
+                    canvas.resize ( 
+                        function () { 
+                            console.log("resize(): $(this) is: "+$(this));
+                            var scope = $(this).parent.data("paperscope");
+                            scope.view.width = $(this).attr("width");
+                            scope.view.height = $(this).attr("height");
+                            scope.view.draw();
+                    } );
+                    
+                    
+                    //paperscopepaperscope/ set up a PaperScope for drawing
                     var paperscope = new paper.PaperScope();                                 
-                    paperscope.setup(document.getElementById(canvasid));                     
+                    paperscope.setup(document.getElementById(canvasid));
+                    paperscope.view.onResize = function(event) {
+                        console.log('paper resize...');
+                    };
                     obj.data("paperscope", paperscope);                                      
 
                 }
@@ -318,7 +347,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 
 
     $.fn.pieChart = function(methodOrOptions) {
-
+        console.log("in function methodOrOptions, argument is: "+methodOrOptions);
         if (methods[methodOrOptions]) {
             return methods[methodOrOptions].apply(this, Array.prototype.slice.call(arguments, 1));
         } else if ( typeof methodOrOptions === 'object' || ! methodOrOptions ) {
