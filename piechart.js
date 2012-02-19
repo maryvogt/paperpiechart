@@ -203,13 +203,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
             }
 
             textItem.justification = (labelEnd.x >= center.x) ? "left" : "right";
-            console.log("textItem bounds: "+JSON.stringify(textItem.bounds));
-            
-
-
         } // end for
-
-
     }     // end if nums != null
 
     
