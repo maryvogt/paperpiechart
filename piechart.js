@@ -1,6 +1,11 @@
 // TODO: 
 
 // go back to width and height; corresponding layout work
+// make text items DOM elements; give them a class. This means that the browser will render them, 
+// JQuery can get their size for layout
+// ... and then we'll have to revisit the cleanup code again
+// parent div will have to be position: relative , but the one the HTML dude made might have to be
+// position absolute, so we have to make a new div tag within the HTML dude's parent. 
 
 // move "numbers" out from all the other options ?  probably not
 // review methods.options - how does it get called? Not from the current paperchart.html!
@@ -8,6 +13,8 @@
 
 
 // label placement
+
+
 
 // choose your starting angle
 
@@ -24,8 +31,8 @@ var piechartDefaults = {
     // Default values for properties that we can't work without
     strokecolor: "black", 
     strokewidth: 0,
-    radius: 200
-}; 
+    width: 200, 
+    height: 200}; 
                 
 //-------------------------------//
 // Helper functions              //
@@ -83,9 +90,11 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 
         // calculate center and radius for the pie chart
         var center = scope.view.center.clone();
+        var width = obj.data("width");
+        var height = obj.data("height");
+        var radius = (width < height) ? 0.5 * width - 10 : 0.5 * height - 10;
 
-        var radius = obj.data("radius");
-
+        
         var paperItems = obj.data("paperItems");
         if (paperItems == null) {
             paperItems = new Array;
@@ -105,8 +114,12 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 
         var fillcolors = obj.data("colors");
 
-        
+        var leftmost;
+        var rightmost;
+        var topmost;
+        var bottommost;
 
+        
         for (i = 0; i < nums.length; i++, start = to) {
             // each path starts at the center,
             wedgePath = new scope.Path(center);
@@ -190,6 +203,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
             }
 
             textItem.justification = (labelEnd.x >= center.x) ? "left" : "right";
+            console.log("textItem bounds: "+JSON.stringify(textItem.bounds));
             
 
 
@@ -254,32 +268,20 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                     var canvas;
                     var canvasid = obj.data("id");
                     
-                    var radius = obj.data("radius");  
-                    var canvassize; 
-                    // TODO: padding must be adjustable
-                    
-                    if (obj.data("width") == null) {
-                        canvassize = 2.5 * radius + 50;
-                    }
-                    else {
-                        canvassize = obj.data("width");
-                    }
-
+                    var canvaswidth = obj.data("width");
+                    var canvasheight = obj.data("height");
 
     
-                    // as we add label options, the layout will get more complex, but right now let's just splat the thing in the middle of a canvas
+                    // as we add label options, the layout will get more complex
                   
-                    canvas = $('<canvas id="' + canvasid + '" width="' + canvassize + '" ' + 
-                           'height="' + canvassize + '"></canvas>');
+                    canvas = $('<canvas id="' + canvasid + '" width="' + canvaswidth + '" ' + 
+                           'height="' + canvasheight + '"></canvas>');
                     obj.css({
-                        'width': canvassize + 'px',
-                        'height': canvassize + 'px'
+                        'width': canvaswidth + 'px',
+                        'height': canvasheight + 'px'
                     });
                     canvas.addClass("piechart");
                     //canvas.css('background', '#' + Math.floor(Math.random()*16777215).toString(16));
-                    var bkgcolor = Math.floor(Math.random()*16777215) | 0xc0c0c0;
-
-                    canvas.css('background', '#' + bkgcolor.toString(16));
 
                     obj.append(canvas);
 
@@ -347,7 +349,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 
 
     $.fn.pieChart = function(methodOrOptions) {
-        console.log("in function methodOrOptions, argument is: "+methodOrOptions);
+//        console.log("in function methodOrOptions, argument is: "+methodOrOptions);
         if (methods[methodOrOptions]) {
             return methods[methodOrOptions].apply(this, Array.prototype.slice.call(arguments, 1));
         } else if ( typeof methodOrOptions === 'object' || ! methodOrOptions ) {
