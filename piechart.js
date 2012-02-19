@@ -18,7 +18,7 @@ var piechartDefaults = {
     // Default values for properties that we can't work without
     strokecolor: "black", 
     strokewidth: 0,
-    radius: 400
+    radius: 200
 }; 
                 
 //-------------------------------//
@@ -171,6 +171,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
             labelEnd.y += 5;    // TODO, make this little tweak more real
             
             textItem = new scope.PointText(labelEnd);
+            paperItems.push(textItem);
             textItem.fillColor = "black";
             if (obj.data("names") != null) {
                 textItem.content = obj.data("names")[i] + ": "+nums[i].toString();
@@ -202,7 +203,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
     var methods = {
 
         init: function(options) {    
-
+//            console.log("init(): options are "+JSON.stringify(options));
             // 
             if ($.isArray(options)) {
                 options = { numbers: options };
@@ -211,14 +212,15 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
             // "numbers" is a special option, being the actual data we are charting
             // so make a note if we have some numbers coming in
             var dataChanged = (options["numbers"] != null);
+//            console.log("init(): dataChanged is "+dataChanged);
 
             // TODO: doublecheck the "initialized" mechanism.
             return this.each(function() {
 
                 var newOptions = options;
-                obj = $(this);
+                var obj = $(this);
 
-                var oldOptions = obj.data("options");
+                var oldOptions = obj.data();
 //                console.log("init(): oldOptions are: "+JSON.stringify(oldOptions));
                 if (oldOptions == null || oldOptions.initialized == null) {         
                     oldOptions = piechartDefaults;
