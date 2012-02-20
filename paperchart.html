@@ -14,23 +14,24 @@
     $(document).ready(function(){
         $('#def').html("<pre>"+JSON.stringify(piechartDefaults)+"</pre>");
 
-        $('#div0').pieChart({numbers: [30, 50, 80], id: "piechart0"});
-        $('#div1').pieChart({   width: 200, height: 250,
+        //$('#div0').pieChart({numbers: [30, 50, 80], id: "piechart0"});
+        $('#div1').pieChart({   width: 500, height: 250,
                                 //numbers: [1, 2, 1, 2, 1, 2, 1, 2], 
                                 colors: ["red", "orange", "yellow", "green", "turquoise", "blue", "violet", "magenta"],
                                 strokewidth: 5,
                                 strokecolor: "yellow"   });          
 
         $('#div2').pieChart({ id: "piechart2", radius:140,
-                                width: 75, height: 75,
+                                width: 400, height: 350,
                                 colors: ["#00FFCC", "#00D9BD", "#00B2AD", "#008099", "#00598A", "#002675", "#000066"],
                                 numbers: [64, 32, 16, 8, 4, 2, 1],
-                                names: ["Amy", "Basil", "Claude", "Doris", "Egbert", "Flora", "George"]
+                                names: ["Amy", "Basilesque", "Claude", "Doris", "Egbertina", "Flora", "George"]
          });
 
         $('#div3').pieChart({   id: "piechart3", 
                                 strokewidth: 5,
-                                numbers: [1, 24, 32, 1, 10]});         
+                                width: 400, height: 400,
+                                numbers: [64, 32, 16, 8, 4, 2, 1]});         
 
         $('div > canvas').css("background", "orange");    
 
@@ -47,9 +48,9 @@
 <body>                      
 <h1>PaperChart</h1>
 
-    <button id="pushme" onclick="$('#div1').pieChart({ strokecolor: 'blue', strokewidth: 5, numbers: [24, 12, 24, 12, 24, 6, 4]});">push me</button>
-    <button id="pushme2" onclick="$('#div2').pieChart({strokecolor: 'purple', numbers: [1, 1, 1, 1, 10]});">push me too</button>
-    <button id="pushme3" onclick="$('#div3').pieChart({strokecolor: 'cyan', numbers: [1, 24, 32, 32, 10]});">push me three</button>
+    <button id="pushme" onclick="$('#div1').pieChart({ strokecolor: 'blue', strokewidth: 5, numbers: [24, 12, 24, 12, 24, 6, 4]});">change chart 1</button>
+    <button id="pushme2" onclick="$('#div2').pieChart({strokecolor: 'purple', numbers: [1, 1, 1, 1, 10]});">change chart 2</button>
+    <button id="pushme3" onclick="$('#div3').pieChart({strokecolor: 'cyan', numbers: [1, 24, 32, 32, 10]});">change chart 3</button>
     <button id="pushme4" onclick="$('#div2').css('width', '602px'); $('div2').pieChart(); $('#div2').children('canvas').css('background', 'lime');">resize chart 2</button>
     
 

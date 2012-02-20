@@ -1,6 +1,6 @@
+
 // TODO: 
 
-// go back to width and height; corresponding layout work
 // make text items DOM elements; give them a class. This means that the browser will render them, 
 // JQuery can get their size for layout
 // ... and then we'll have to revisit the cleanup code again
@@ -13,6 +13,7 @@
 
 
 // label placement
+// deal with overlapping labels
 
 
 
@@ -32,8 +33,12 @@ var piechartDefaults = {
     strokecolor: "black", 
     strokewidth: 0,
     width: 200, 
-    height: 200}; 
-                
+    height: 200,
+    id: "pccanv"}; 
+
+
+var idcounter = 0;
+
 //-------------------------------//
 // Helper functions              //
 //-------------------------------//
@@ -50,11 +55,10 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
         // may be stored in obj.data
         scope = obj.data("paperscope");
         if (scope == null) {
-            console.log("doDraw(): paperscope is null");
             return false;
         }
     }
-    // if we already have paths, can we just reuse them?
+    // if we already have paths, check to see if we need to redraw them
 
     var paperItems = obj.data("paperItems");
     if (paperItems != null && !dataChanged) {
@@ -76,6 +80,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
         text.content = "No data for pie chart.";
         text.fillColor = "black";
         text.justification = "center";
+        
     }
     if (nums != null) {
         // if we have numbers, we made sure it was an array when it was set in
@@ -92,33 +97,58 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
         var center = scope.view.center.clone();
         var width = obj.data("width");
         var height = obj.data("height");
-        var radius = (width < height) ? 0.5 * width - 10 : 0.5 * height - 10;
+
+        // figure out how much space to leave for labels
+        var labels = obj.data("labels");
+        var maxWidth = 0;
+        var maxHeight = 0;
+
+        if (labels != null){
+            for (var i = 0; i < labels.length; i++) {
+                console.log("doDraw(): labels["+i+"].width is "+labels[i].width());
+                maxWidth = (labels[i].width() > maxWidth) ? labels[i].width() : maxWidth;
+                maxHeight = (labels[i].height() > maxHeight) ? labels[i].height() : maxHeight;
+            }
+            console.log("doDraw(): maxWidth is "+maxWidth);
+        }
+
+        // make room for labels
+
+        // 0.8 accounts for label pointer angle part
+        // 15 accounts for label pointer end part
+        // maxWidth accounts for label text
+        // 2 is padding
+        var xradius = 0.5 * width * 0.8 - 15 - maxWidth - 2; 
+        var yradius = 0.5 * height * 0.8 - 15 - maxHeight;
+        radius = (xradius < yradius) ? xradius : yradius;
 
         
-        var paperItems = obj.data("paperItems");
-        if (paperItems == null) {
-            paperItems = new Array;
-            obj.data("paperItems", paperItems);
-        }
 
         // these are all Items from PaperScript that need to be removed when we are done with them later
         var wedgePath;
         var labelPath;
-        var textItem;
-
+        
         var start = new scope.Point(center.x + radius, center.y );      // first wedge starts at 3:00
         var through;
         var to;
         var throughangle= 0;
         var totalangle = 0;
 
+        // fillcolors for wedges
         var fillcolors = obj.data("colors");
 
-        var leftmost;
-        var rightmost;
-        var topmost;
-        var bottommost;
+        // get the parent div (the one we created) for adding text label children
+        var parentid = obj.data("divid");
+        var parentdiv = $('#'+parentid);    
+        var doNames = (obj.data("names") != null);
 
+//        var testLabel = $('<span> 4 </span>');
+//        testLabel.addClass("pclabel");
+//        obj.children("div.piechartdiv").first().append(testLabel);
+//        var testHeight = testLabel.height();
+//        testLabel.remove();
+
+        var labelHeight = obj.data("labelHeight");
         
         for (i = 0; i < nums.length; i++, start = to) {
             // each path starts at the center,
@@ -169,8 +199,8 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
             // okay great, now let's put some label markers in here
             // TODO: tweak and maybe optionize the hardcoded numbers here
             // TODO: how to deal when the line goes straight up or down?
-            var labelStart = new scope.Point( 0.5 * radius * Math.cos(throughangle) + center.x,
-                                              0.5 * radius * Math.sin(throughangle) + center.y);
+            var labelStart = new scope.Point( 0.75 * radius * Math.cos(throughangle) + center.x,
+                                              0.75 * radius * Math.sin(throughangle) + center.y);
             var labelTurn = new scope.Point( 1.25 * radius * Math.cos(throughangle) + center.x,
                                              1.25 * radius * Math.sin(throughangle) + center.y);
             var labelEnd;
@@ -189,20 +219,47 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
             labelPath.strokeWidth = 1;
             labelPath.strokeColor = "black";
 
-            // aaaand, the labels themselves 
+//            var label = obj.data("labels")[i];
 
-            labelEnd.y += 5;    // TODO, make this little tweak more real
             
-            textItem = new scope.PointText(labelEnd);
-            paperItems.push(textItem);
-            textItem.fillColor = "black";
-            if (obj.data("names") != null) {
-                textItem.content = obj.data("names")[i] + ": "+nums[i].toString();
-            } else {
-                textItem.content = nums[i].toString();
+            
+//            labelEnd.y -= labelHeight / 2;
+            
+
+
+            var doNames = obj.data("names") != null;
+            var d = $('<span class="pclabel">'+ (doNames ? obj.data("names")[i] + ": " : '')+nums[i]+ '</span>');
+            obj.children("div").eq(0).append(d);
+            var w = d.width();
+//                d.remove();
+//            console.log("label text is "+label.text()+", label width is "+w);
+            if (labelEnd.x < center.x) {
+                labelEnd.x -= w;
             }
 
-            textItem.justification = (labelEnd.x >= center.x) ? "left" : "right";
+            d.css( {
+                'position': 'absolute',
+                'left': labelEnd.x+'px',
+                'top':  labelEnd.y - (labelHeight / 2) +'px',
+            });          
+
+            
+            // aaaand, the labels themselves 
+//            var labelString = '<span>'+(doNames ? obj.data("names")[i] + ": " : '')+nums[i]+'</span>';
+//           console.log("labelString is: "+labelString);
+//            var labelText;      
+//            labelText = $(labelString);
+//            labelText.addClass("pclabel");
+//            labelText.css( {
+//                'position': 'absolute',
+//                'left': labelEnd.x+'px',
+//                'top': (labelEnd.y )+'px'
+//            });          
+
+//            parentdiv.append(labelText);
+
+//            console.log("labelText.width is "+labelText.innerWidth());
+
         } // end for
     }     // end if nums != null
 
@@ -256,12 +313,28 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                 // store the new properties
                 obj.data(newOptions); 
                 
-                   
-                // want to create a canvas as a child of the current obj
-                if (obj.children("canvas.piechart").length === 0) {
+                // we will create a div as a child of the current obj (which is also a div)
+                // so that we can make sure our div is position: relative - then we create a canvas 
+                // as a child of that, for paper.js to draw in
+
+                var div;
+                if (obj.children("div.piechartdiv").length === 0) {
+
+                    // here's the div
+                    var divid = obj.data("divid");
+                    if (divid == null) {
+                        divid = "pcdiv" + idcounter++;
+                        obj.data("divid", divid);
+                    }
+
+                    div = $('<div id="' + divid + '"></div>');
+                    div.addClass("piechartdiv");
+                    div.css('position', 'relative');
+                    obj.append(div);
+
+                    // and here's the canvas
                     var canvas;
                     var canvasid = obj.data("id");
-                    
                     var canvaswidth = obj.data("width");
                     var canvasheight = obj.data("height");
 
@@ -270,6 +343,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                   
                     canvas = $('<canvas id="' + canvasid + '" width="' + canvaswidth + '" ' + 
                            'height="' + canvasheight + '"></canvas>');
+
                     obj.css({
                         'width': canvaswidth + 'px',
                         'height': canvasheight + 'px'
@@ -277,35 +351,53 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
                     canvas.addClass("piechart");
                     //canvas.css('background', '#' + Math.floor(Math.random()*16777215).toString(16));
 
-                    obj.append(canvas);
-
-                    $(window).resize(function() {
-                        console.log('window resize...');
-                    });
-
-                    obj.resize(function() {
-                        console.log('resize parent...');
-                    });
-    
-                    canvas.resize ( 
-                        function () { 
-                            console.log("resize(): $(this) is: "+$(this));
-                            var scope = $(this).parent.data("paperscope");
-                            scope.view.width = $(this).attr("width");
-                            scope.view.height = $(this).attr("height");
-                            scope.view.draw();
-                    } );
+                    div.append(canvas);                    
                     
-                    
-                    //paperscopepaperscope/ set up a PaperScope for drawing
+                    //set up a PaperScope for drawing
                     var paperscope = new paper.PaperScope();                                 
                     paperscope.setup(document.getElementById(canvasid));
                     paperscope.view.onResize = function(event) {
                         console.log('paper resize...');
                     };
-                    obj.data("paperscope", paperscope);                                      
+                    obj.data("paperscope", paperscope);
 
+                    // set up an array to hold items that need cleanup
+                    var paperArray = new Array();
+                    obj.data("paperItems", paperArray);
+
+                } else {
+                    div = obj.children("div.piechartdiv").first();
                 }
+
+                // add the labels for the wedges as children of the div
+                var nums = obj.data("numbers");
+                if (dataChanged) {
+//                    var doNames = (obj.data("names") != null);
+//                    var labels = new Array();
+//                    for (var i = 0; i < nums.length; i++) {
+//                        var labelString = '<span style="display:inline;">'+(doNames ? obj.data("names")[i] + ": " : '')+nums[i]+'</span>';
+//                        var labelText;      
+//                        labelText = $(labelString);
+//                        labelText.addClass("pclabel");
+//                        labelText.css({'position':'absolute'});
+//                            
+//                        div.append(labelText);
+//                        
+//                        labels.push(labelText);
+                        //obj.data("paperItems").push(labelText);
+                        // TODO need to figure out cleanup
+
+//                    } // end for 
+//                    obj.data("labels", labels);
+
+                    var sampleLabel = $('<span> 5 </span>');
+                    sampleLabel.addClass("pcLabel");
+                    div.append(sampleLabel);
+                    obj.data("labelHeight", sampleLabel.height());
+                    sampleLabel.remove();
+                } // end if dataChanged
+
+
 
                 paper = obj.data("paperscope");
                 doDraw(obj, dataChanged, obj.data("paperscope"));
@@ -324,8 +416,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
         options: function(options){
              // 
              // How does this ever get called? is there any point in having this be separate from init? 
-             console.log("==> in options(): args are: "+JSON.stringify(options));
-             var nums = options.data; // is this the right syntax? 
+             var nums = options.data; // is this the right syntax   ? 
 
              // error checking?
              if (nums != null) {
