@@ -99,19 +99,24 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
         var height = obj.data("height");
 
         // figure out how much space to leave for labels
-        var labels = obj.data("labels");
+
+        var sampleLabel = $('<span class="pclabel"></span>');
+
+        obj.children("div.piechartdiv").eq(0).append(sampleLabel);
+
         var maxWidth = 0;
         var maxHeight = 0;
 
-        if (labels != null){
-            for (var i = 0; i < labels.length; i++) {
-                console.log("doDraw(): labels["+i+"].width is "+labels[i].width());
-                maxWidth = (labels[i].width() > maxWidth) ? labels[i].width() : maxWidth;
-                maxHeight = (labels[i].height() > maxHeight) ? labels[i].height() : maxHeight;
-            }
-            console.log("doDraw(): maxWidth is "+maxWidth);
+        var doNames = obj.data("names") != null;
+        for (var i = 0; i < nums.length; i++) {
+            sampleLabel.html((doNames ? obj.data("names")[i] + ": " : "") + nums[i]);
+            var w = sampleLabel.width();
+            var h = sampleLabel.height();
+            maxWidth = (maxWidth < w) ? w : maxWidth;
+            maxHeight = (maxHeight < h ) ? h : maxHeight;
         }
 
+        console.log("maxWidth: "+maxWidth+", maxHeight: "+maxHeight);
         // make room for labels
 
         // 0.8 accounts for label pointer angle part
@@ -240,7 +245,7 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
             d.css( {
                 'position': 'absolute',
                 'left': labelEnd.x+'px',
-                'top':  labelEnd.y - (labelHeight / 2) +'px',
+                'top':  labelEnd.y  +'px',
             });          
 
             
@@ -390,11 +395,6 @@ function doDraw(/*object*/ obj, /* boolean */ dataChanged, /*PaperScope*/ scope)
 //                    } // end for 
 //                    obj.data("labels", labels);
 
-                    var sampleLabel = $('<span> 5 </span>');
-                    sampleLabel.addClass("pcLabel");
-                    div.append(sampleLabel);
-                    obj.data("labelHeight", sampleLabel.height());
-                    sampleLabel.remove();
                 } // end if dataChanged
 
 
